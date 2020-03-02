@@ -6,10 +6,11 @@ import (
 	"io"
 	"net"
 	"strconv"
+	"time"
 )
 
 const (
-	AddrMask        byte = 0xf
+	AddrMask byte = 0xf
 )
 
 type Conn struct {
@@ -57,7 +58,7 @@ func RawAddr(addr string) (buf []byte, err error) {
 // rawaddr shoud contain part of the data in socks request, starting from the
 // ATYP field. (Refer to rfc1928 for more information.)
 func DialWithRawAddr(rawaddr []byte, server string, cipher *Cipher) (c *Conn, err error) {
-	conn, err := net.Dial("tcp", server)
+	conn, err := net.DialTimeout("tcp", server, 5*time.Second)
 	if err != nil {
 		return
 	}

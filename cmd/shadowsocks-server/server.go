@@ -149,7 +149,7 @@ func handleConnection(conn *ss.Conn, port string) {
 		return
 	}
 	debug.Println("connecting", host)
-	remote, err := net.Dial("tcp", host)
+	remote, err := net.DialTimeout("tcp", host, 10*time.Second)
 	if err != nil {
 		if ne, ok := err.(*net.OpError); ok && (ne.Err == syscall.EMFILE || ne.Err == syscall.ENFILE) {
 			// log too many open file error
@@ -159,6 +159,9 @@ func handleConnection(conn *ss.Conn, port string) {
 			log.Println("error connecting to:", host, err)
 		}
 		return
+	}
+	if tcpConn, ok := remote.(*net.TCPConn); ok {
+		_ = tcpConn.SetNoDelay(true)
 	}
 	defer func() {
 		if !closed {
@@ -370,6 +373,9 @@ func run(port, password string) {
 				conn.Close()
 				continue
 			}
+		}
+		if tcpConn, ok := conn.(*net.TCPConn); ok {
+			_ = tcpConn.SetNoDelay(true)
 		}
 		go handleConnection(ss.NewConn(conn, cipher.Copy()), port)
 	}
